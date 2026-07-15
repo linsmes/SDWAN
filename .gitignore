@@ -44,3 +44,6 @@ controller/data.json
 # Misc text files
 输出*.txt
 B端.txt
+
+# Local verification / deployment helpers
+verify*.py
