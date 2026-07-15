@@ -1,0 +1,10 @@
+go 1.26.0
+
+use (
+	./agent
+	./controller
+	./tools/relay
+	./tools/tunprobe
+	./tools/udptest
+	./wireguard-go
+)

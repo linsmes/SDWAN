@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aleiyun 控制面板</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #0f172a; color: #e2e8f0; min-height: 100vh;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    padding: 0 32px; background: #1e293b; border-bottom: 1px solid #334155;
+    display: flex; align-items: center; gap: 32px; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand h1 { font-size: 20px; font-weight: 600; white-space: nowrap; }
+  .badge {
+    background: #0ea5e9; color: #fff; font-size: 12px;
+    padding: 2px 10px; border-radius: 10px;
+  }
+  nav.tabs { display: flex; height: 100%; }
+  nav.tabs a {
+    display: flex; align-items: center; padding: 0 18px;
+    color: #94a3b8; text-decoration: none; font-size: 14px;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  nav.tabs a:hover { color: #e2e8f0; }
+  nav.tabs a.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+  main { padding: 24px 32px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  h2 { font-size: 16px; font-weight: 600; margin: 0 0 12px; color: #cbd5e1; }
+  table {
+    width: 100%; border-collapse: collapse;
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td { padding: 12px 16px; text-align: left; font-size: 14px; }
+  th { background: #263548; color: #94a3b8; font-weight: 500; }
+  tr + tr td { border-top: 1px solid #334155; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .dot.on { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+  .dot.off { background: #64748b; }
+  .disabled-row td { color: #94a3b8; background: rgba(127,29,29,0.08); }
+  .mono { font-family: Consolas, monospace; font-size: 13px; color: #7dd3fc; }
+  .ip { font-weight: 600; color: #fbbf24; cursor: pointer; }
+  .ip:hover { text-decoration: underline; }
+  .lat { font-family: Consolas, monospace; font-size: 12px; color: #86efac; line-height: 1.6; }
+  .lan-bad { color: #ef4444; }
+  .del {
+    background: none; border: 1px solid #ef4444; color: #ef4444;
+    padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
+  }
+  .del:hover { background: #ef4444; color: #fff; }
+  .empty { text-align: center; padding: 48px; color: #64748b; }
+  .hint { color: #64748b; font-size: 13px; margin-top: 16px; line-height: 1.7; }
+  code { background: #263548; padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+  select, input {
+    background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+    padding: 6px 10px; border-radius: 4px; font-size: 13px;
+  }
+  .toolbar {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .toolbar input.search { min-width: 240px; }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .stat { font-size: 13px; color: #94a3b8; }
+  .toolbar .stat b { color: #38bdf8; font-weight: 600; }
+  .form { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    background: #0ea5e9; border: none; color: #fff;
+    padding: 7px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;
+  }
+  .btn:hover { background: #0284c7; }
+  .btn-secondary {
+    background: #334155; color: #e2e8f0;
+  }
+  .btn-secondary:hover { background: #475569; }
+  .acc-form-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    padding: 20px 24px; margin: 16px 0;
+  }
+  .acc-form-card h3 {
+    font-size: 14px; font-weight: 600; color: #cbd5e1; margin-bottom: 16px;
+  }
+  .acc-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .acc-form-field {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .acc-form-field label {
+    font-size: 12px; color: #94a3b8; font-weight: 500;
+  }
+  .acc-form-field input,
+  .acc-form-field select {
+    width: 100%; padding: 8px 10px;
+  }
+  .acc-form-field.short {
+    max-width: 120px;
+  }
+  .acc-form-actions {
+    display: flex; gap: 10px; align-items: center; margin-top: 18px;
+  }
+  .modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal.active { display: flex; }
+  .modal-box {
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    padding: 20px 24px; min-width: 320px; max-width: 90vw;
+  }
+  .modal-box h3 { font-size: 15px; margin-bottom: 14px; color: #cbd5e1; }
+  .modal-box input { width: 100%; margin-bottom: 14px; }
+  .modal-box .actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .modal-box .hint { margin: -8px 0 12px; font-size: 12px; }
+  /* 管理后台登录页 */
+  .login-overlay {
+    position: fixed; inset: 0; background: #0f172a;
+    display: flex; align-items: center; justify-content: center; z-index: 200;
+  }
+  .login-overlay.hidden { display: none; }
+  .login-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+    padding: 36px 40px; width: 360px; max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .login-card h2 { text-align: center; margin-bottom: 24px; font-size: 18px; color: #e2e8f0; }
+  .login-field { margin-bottom: 16px; }
+  .login-field label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+  .login-field input { width: 100%; padding: 10px 12px; }
+  .login-error { color: #ef4444; font-size: 13px; min-height: 20px; margin-bottom: 12px; }
+  .login-card .btn { width: 100%; padding: 10px; font-size: 14px; }
+  .logout-btn, .change-password-btn {
+    background: none; border: 1px solid #475569; color: #94a3b8;
+    padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
+  }
+  .logout-btn { margin-left: auto; }
+  .logout-btn:hover, .change-password-btn:hover { color: #e2e8f0; border-color: #94a3b8; }
+  .header-links {
+    display: flex; align-items: center; gap: 16px; margin-left: auto;
+  }
+  .header-links a {
+    color: #94a3b8; text-decoration: none; font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .header-links a:hover { color: #38bdf8; }
+  .header-links svg { width: 16px; height: 16px; fill: currentColor; }
+</style>
+
+</head>
+<body>
+<section class="login-overlay" id="page-login">
+  <div class="login-card">
+    <h2>Aleiyun 管理后台</h2>
+    <div class="login-field">
+      <label for="login-username">用户名</label>
+      <input id="login-username" placeholder="请输入用户名" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label for="login-password">密码</label>
+      <input id="login-password" type="password" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="btn" onclick="login()">登录</button>
+  </div>
+</section>
+<header>
+  <div class="brand">
+    <h1>Aleiyun 控制面板</h1>
+    <span class="badge">v0.7.0</span>
+  </div>
+  <nav class="tabs">
+    <a href="#devices" id="tab-devices">设备</a>
+    <a href="#networks" id="tab-networks">网络集群</a>
+    <a href="#links-net" id="tab-links-net">网对网</a>
+    <a href="#links-dev" id="tab-links-dev">点对点</a>
+    <a href="#accounts" id="tab-accounts">账号</a>
+    <a href="#relays" id="tab-relays">中转</a>
+    <a href="#topology" id="tab-topology">拓扑图</a>
+  </nav>
+  <button class="change-password-btn" id="change-password-btn" onclick="changePassword()" style="display:none">修改密码</button>
+  <button class="logout-btn" id="logout-btn" onclick="logout()" style="display:none">退出登录</button>
+  <div class="header-links">
+    <a href="https://github.com/linsmes" target="_blank" rel="noopener" title="GitHub">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+    <a href="https://gitee.com/linsmes" target="_blank" rel="noopener" title="Gitee">
+      <svg viewBox="0 0 16 16"><path d="M8.0 0C3.58 0 0 3.58 0 8c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8zm3.21 11.13c-.66.17-1.32-.23-1.49-.89-.17-.66.23-1.32.89-1.49.66-.17 1.32.23 1.49.89.17.66-.23 1.33-.89 1.49zm-2.1-3.16c-.66.17-1.32-.23-1.49-.89-.17-.66.23-1.32.89-1.49.66-.17 1.32.23 1.49.89.17.66-.23 1.33-.89 1.49zM6.9 4.8c.66-.17 1.32.23 1.49.89.17.66-.23 1.32-.89 1.49-.66.17-1.32-.23-1.49-.89-.17-.66.23-1.32.89-1.49z"/></svg>
+      Gitee
+    </a>
+  </div>
+</header>
+<main>
+  <section class="page" id="page-devices">
+    <div class="toolbar">
+      <input class="search" id="dev-search" placeholder="搜索设备名称或虚拟 IP…" oninput="renderDevices()">
+      <select id="dev-filter-net" onchange="renderDevices()"></select>
+      <label style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px"><input type="checkbox" id="dev-filter-disabled" onchange="renderDevices()"> 只看已禁用</label>
+      <span class="spacer"></span>
+      <span class="stat">设备总数 <b id="total">0</b></span>
+      <span class="stat">在线 <b id="online">0</b></span>
+      <span class="stat">离线 <b id="offline">0</b></span>
+      <span class="stat">已禁用 <b id="disabled-count" style="color:#ef4444">0</b></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>状态</th><th>名称</th><th>账号</th><th>虚拟 IP</th><th>平台</th><th>网络</th>
+          <th>内网网段</th><th>机器码</th><th>延迟</th><th>最后心跳</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="hint">
+      设备接入:先在「账号」页创建账号,然后在客户端配置中填写 <code>username</code> / <code>password</code> 启动即可,<br>
+      所属网络由账号绑定的公司决定(公开注册已关闭)。点击虚拟 IP 可手动修改。<br>
+      <b>下线</b>:仅把设备标为离线(下次心跳会重新上线);<b>禁用</b>:封禁该设备及相同 MAC 的机器(换密钥也无效);<b>移除</b>:删除记录并回收 IP。
+    </div>
+  </section>
+
+  <section class="page" id="page-networks">
+    <h2>网络集群管理</h2>
+    <table>
+      <thead>
+        <tr><th>名称</th><th>CIDR</th><th>设备数</th><th></th></tr>
+      </thead>
+      <tbody id="netbody"></tbody>
+    </table>
+    <div class="form">
+      <input id="net-name" placeholder="网络名称,如 A公司">
+      <input id="net-cidr" placeholder="CIDR,如 10.10.10.0/24">
+      <button class="btn" onclick="addNetwork()">新建网络</button>
+    </div>
+  </section>
+
+  <section class="page" id="page-links-net">
+    <h2>网对网互联</h2>
+    <div class="hint" style="margin-top:0">未建立规则的网络互相隔离;同网络设备默认互通</div>
+    <table>
+      <thead>
+        <tr><th>A 网络</th><th></th><th>B 网络</th><th></th></tr>
+      </thead>
+      <tbody id="linkbody-net"></tbody>
+    </table>
+    <div class="form">
+      <select id="link-net-a"></select>
+      <span>↔</span>
+      <select id="link-net-b"></select>
+      <button class="btn" onclick="addLink('network')">添加规则</button>
+    </div>
+    <div class="form">
+      <select id="link-hub"></select>
+      <button class="btn" onclick="connectAllNetworks()">连通所有网络</button>
+    </div>
+    <div class="hint" style="margin-top:8px">连通所有网络:让选中网络与其余每个网络逐一建立网对网规则(已存在的自动跳过),适合总部-分公司中心辐射拓扑。</div>
+  </section>
+
+  <section class="page" id="page-links-dev">
+    <h2>点对点互联</h2>
+    <div class="hint" style="margin-top:0">点对点规则只放行指定的两台设备,其余设备保持隔离</div>
+    <table>
+      <thead>
+        <tr><th>A 设备(虚拟IP)</th><th></th><th>B 设备(虚拟IP)</th><th></th></tr>
+      </thead>
+      <tbody id="linkbody-dev"></tbody>
+    </table>
+    <div class="form">
+      <select id="link-dev-a"></select>
+      <span>↔</span>
+      <select id="link-dev-b"></select>
+      <button class="btn" onclick="addLink('device')">添加规则</button>
+    </div>
+  </section>
+  <section class="page" id="page-accounts">
+    <h2>账号管理</h2>
+    <div class="hint" style="margin-top:0">客户端凭账号密码注册,所属网络由账号绑定的公司(网络)决定;公开注册已关闭,账号只能在此创建。每个账号默认仅允许绑定 1 台设备,超限拒绝注册,上限可在此调整</div>
+
+    <div class="acc-form-card">
+      <h3>创建账号</h3>
+      <div class="acc-form-grid">
+        <div class="acc-form-field">
+          <label for="acc-username">用户名</label>
+          <input id="acc-username" placeholder="请输入用户名">
+        </div>
+        <div class="acc-form-field">
+          <label for="acc-password">密码</label>
+          <input id="acc-password" type="text" placeholder="留空则随机生成">
+        </div>
+        <div class="acc-form-field">
+          <label for="acc-network">所属网络</label>
+          <select id="acc-network"></select>
+        </div>
+        <div class="acc-form-field short">
+          <label for="acc-maxdev">设备数上限</label>
+          <input id="acc-maxdev" type="number" min="1" value="1" title="该账号最多允许绑定的设备数量">
+        </div>
+      </div>
+      <div class="acc-form-actions">
+        <button class="btn" onclick="addAccount()">创建账号</button>
+        <button class="btn btn-secondary" onclick="genPassword()">随机生成密码</button>
+      </div>
+    </div>
+
+    <div id="acc-pw-box" style="display:none;background:#422006;border:1px solid #fbbf24;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:14px">
+      明文密码(只显示这一次,请立即复制): <code id="acc-pw-text" style="font-size:15px;color:#fbbf24"></code>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>用户名</th><th>所属公司</th><th>设备数/上限</th><th>创建时间</th><th></th><th></th><th></th></tr>
+      </thead>
+      <tbody id="accbody"></tbody>
+    </table>
+  </section>
+
+  <section class="page" id="page-relays">
+    <h2>中转节点管理</h2>
+    <div class="hint" style="margin-top:0">在带公网 IP 的服务器上部署 <code>aleiyun_relay</code>，此处维护其地址。客户端注册/心跳时会自动获取当前在线的中转节点列表，P2P 失败时可直接使用。</div>
+    <table>
+      <thead>
+        <tr><th>状态</th><th>中转地址</th><th>公钥</th><th>备注</th><th>最后心跳</th><th></th></tr>
+      </thead>
+      <tbody id="relaybody"></tbody>
+    </table>
+    <div class="form">
+      <input id="relay-address" placeholder="公网地址:端口, 如 relay.example.com:3478" style="min-width:260px">
+      <input id="relay-pubkey" placeholder="WireGuard 公钥(可选)" style="min-width:220px">
+      <input id="relay-note" placeholder="备注(可选)" style="min-width:160px">
+      <button class="btn" onclick="addRelay()">添加中转</button>
+    </div>
+    <div class="hint">
+      启动 relay 时带上 <code>-controller http://controller:52888/api/relays/beat</code> 即可自动向面板上报心跳。<br>
+      建议 relay 管理接口(<code>-http</code>)只监听内网或关闭，避免暴露。
+    </div>
+  </section>
+
+  <section class="page" id="page-topology">
+    <div class="toolbar">
+      <button class="btn" onclick="loadTopology()">刷新</button>
+      <label style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px"><input type="checkbox" id="topo-show-belongs" checked onchange="renderTopology()"> 归属</label>
+      <label style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px"><input type="checkbox" id="topo-show-netlink" checked onchange="renderTopology()"> 网对网</label>
+      <label style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px"><input type="checkbox" id="topo-show-devlink" checked onchange="renderTopology()"> 点对点</label>
+      <label style="font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:6px"><input type="checkbox" id="topo-show-owns" onchange="renderTopology()"> 账号</label>
+      <select id="topo-layout" onchange="applyTopologyLayout()">
+        <option value="grid" selected>网格</option>
+        <option value="force">力导向</option>
+        <option value="circular">环形</option>
+      </select>
+      <button class="btn" onclick="resetTopologyLayout()" title="清除手动保存的位置，重新计算布局">重置布局</button>
+      <input class="search" id="topo-search" placeholder="搜索节点…" oninput="searchTopology()">
+      <span class="spacer"></span>
+      <span class="stat">节点 <b id="topo-nodes">0</b></span>
+      <span class="stat">连线 <b id="topo-edges">0</b></span>
+    </div>
+    <div style="display:flex;gap:12px;height:calc(100vh - 150px);min-height:480px">
+      <div id="topology-chart" style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;overflow:hidden"></div>
+      <div id="topology-info" style="width:260px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px;font-size:13px;display:none">
+        <h3 style="font-size:14px;margin-bottom:10px;color:#cbd5e1" id="topo-info-title">详情</h3>
+        <div id="topo-info-body" style="color:#94a3b8;line-height:1.7"></div>
+        <div id="topo-info-actions" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="hint">
+      拓扑图：滚轮缩放，点击节点/连线查看详情并操作。<br>
+      点击任意网络或设备节点，右侧面板会列出所有可建立的网对网或点对点连接，点击「连接」即可添加规则。<br>
+      拖拽节点可调整位置。
+    </div>
+  </section>
+</main>
+
+<!-- 通用网页弹窗:替代浏览器 prompt,用于重置密码/调整上限/修改 IP 等 -->
+<div id="modal" class="modal" onclick="if(event.target===this) closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h3 id="modal-title">标题</h3>
+    <div id="modal-hint" class="hint"></div>
+    <input id="modal-input" type="text">
+    <div class="actions">
+      <button class="btn" id="modal-random" style="display:none" onclick="fillModalRandom()">随机生成</button>
+      <span style="flex:1"></span>
+      <button class="btn" onclick="modalOK()">确定</button>
+      <button class="del" onclick="closeModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="app.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build output
+dist/
+**/dist/
+
+# Go
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test
+*.test
+*.out
+
+# Runtime / local data
+*.key
+*.json
+!*/go.mod
+data.json
+controller/data.json
+
+# Build artifacts
+*_Linux_X64
+*_Windows_X64.exe
+*.old-*
+
+# Misc text files
+输出*.txt
+B端.txt

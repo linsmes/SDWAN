@@ -1,0 +1,18 @@
+[Unit]
+Description=Aleiyun Relay (UDP relay for SD-WAN)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/SDWAN
+ExecStart=/opt/SDWAN/aleiyun_relay_Linux_X64 -udp :53478 -http 127.0.0.1:58081 -timeout 5m -log /var/log/aleiyun_relay.log -controller http://121.40.193.74:52888/api/relays/beat
+Restart=always
+RestartSec=5
+
+# 安全加固：以普通用户运行可取消下面两行注释并创建 aleiyun 用户
+# User=aleiyun
+# Group=aleiyun
+
+[Install]
+WantedBy=multi-user.target
