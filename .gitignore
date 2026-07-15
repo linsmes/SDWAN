@@ -47,3 +47,13 @@ B端.txt
 
 # Local verification / deployment helpers
 verify*.py
+deploy.py
+
+# Local tools (only relay is part of the core project)
+tools/pathcheck/
+tools/tunprobe/
+tools/udptest/
+tools/webtest/
+
+# Assets
+image.png
