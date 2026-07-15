@@ -1,4 +1,4 @@
-# Aleiyun — 自建虚拟局域网(WireGuard + Web 总控面板)
+# Aleiyun 云网关
 
 基于 wireguard-go 的虚拟局域网方案:设备装 client(agent)即自动组网,中心 server(controller)提供 Web 总控面板。
 
